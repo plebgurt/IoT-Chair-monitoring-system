@@ -63,15 +63,6 @@ def reset_data():
 
     pycom.rgbled(0xFF0000)
 
-# def timer_current_position(start_time, zero_other_start, inc_topic, total_time_position):
-#     time_dictionary[zero_other_start] == 0
-#     if time_dictionary[start_time] == 0:
-#         time_dictionary[start_time] = time.time()
-#     current_time = time_dictionary['end_time'] - time_dictionary[start_time]
-#     time_dictionary[start_time] =  current_time
-#     send_data(inc_topic, time_convert_min(time_dictionary[total_time_position]))
-#     pycom.rgbled(0xFFFF00)
-
 try:                      # Code between try: and finally: may cause an error
                           # so ensure the client disconnects the server if
                           # that happens.
