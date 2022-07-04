@@ -44,7 +44,6 @@ def connect_adafruit():
     AIO_KEY = config.AIO_KEY
     AIO_CLIENT_ID = ubinascii.hexlify(machine.unique_id())  # Can be anything
 
-
     # Use the MQTT protocol to connect to Adafruit IO
     client = MQTTClient(AIO_CLIENT_ID, AIO_SERVER, AIO_PORT, AIO_USER, AIO_KEY)
     CLIENT = client

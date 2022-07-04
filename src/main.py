@@ -12,16 +12,14 @@ from machine import Pin         # Imports the use of pins
 halleffect = Pin('P15', mode=Pin.IN)
 py = Pycoproc()
 acc = LIS2HH12(py)
-
+angle = 10
 send_data_intervalls = 60 # seconds
 time_dictionary = {'start_time_upright' : 0, 'start_time_reclined' : 0, 'total_time_upright' : 0, 'total_time_reclined' : 0, 'end_time' : 0, 'total_time' : 0}
 is_sitting = False;
-reminder_sent_dictionary = {0: False, 1 : False, 2 : False, 3 : False, 4 : False, 5 : False, 6 : False}
 
 def check_is_chair_reclined():
-    print("Pitch: " + str(acc.pitch()))
     send_data(config.AIO_ANGLE, acc.pitch())
-    if acc.pitch() < -40 or acc.pitch() > 40:
+    if acc.pitch() < -angle or acc.pitch() > angle:
         return True
     else:
         return False
@@ -45,6 +43,8 @@ def send_data(inc_topic, value):
     except Exception as e:
         print('FAILED: {}, {}'.format(inc_topic, value))
 
+reminder_sent_dictionary = {0: False, 1 : False, 2 : False, 3 : False, 4 : False, 5 : False, 6 : False}
+
 def send_reminder(time):
     if reminder_sent_dictionary.get(time) == False:
         send_data(config.AIO_SEND_REMINDER, time)
@@ -53,7 +53,6 @@ def send_reminder(time):
 def reset_data():
     global is_sitting
     if is_sitting == True:
-        print("I am here in reset")
         for key in time_dictionary.keys():
             time_dictionary[str(key)] = 0
 
