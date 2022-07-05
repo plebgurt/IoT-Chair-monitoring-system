@@ -52,12 +52,19 @@ def send_reminder(time):
 
 def reset_data():
     global is_sitting
+
     if is_sitting == True:
+        hall_sensor = halleffect()
+
         for key in time_dictionary.keys():
             time_dictionary[str(key)] = 0
 
         send_data(config.AIO_RECLINED_TIME, time_convert_min(time_dictionary['total_time_reclined']))
         send_data(config.AIO_UPRIGHT_TIME, time_convert_min(time_dictionary['total_time_upright']))
+        send_data(config.AIO_TOTAL_SITTING_TIME, (time_convert_hour(time_dictionary['total_time']) + (time_convert_min(time_dictionary['total_time']) / 60)))
+        send_data(config.AIO_CURRENTLY_SITTING, hall_sensor)
+
+
         is_sitting = False
 
     pycom.rgbled(0xFF0000)
@@ -68,43 +75,42 @@ try:                      # Code between try: and finally: may cause an error
     while 1:              # Repeat this loop forever
 
             hall_sensor = halleffect()
-            send_data(config.AIO_CURRENTLY_SITTING, hall_sensor)
 
             if hall_sensor == 0:
 
                 if is_sitting == False:
                     is_sitting = True
-                time_dictionary['end_time'] = time.time()
+                    send_data(config.AIO_CURRENTLY_SITTING, hall_sensor)
+
+                if time_dictionary['end_time'] == 0:
+                    time_dictionary['end_time'] = time.time()
                 is_chair_reclined = check_is_chair_reclined()
 
                 if is_chair_reclined == True:
-                    time_dictionary['start_time_upright'] == 0
-                    if time_dictionary['start_time_reclined'] == 0:
-                        time_dictionary['start_time_reclined'] = time.time()
-                    current_time = time_dictionary['end_time'] - time_dictionary['start_time_reclined']
-                    time_dictionary['total_time_reclined'] =  current_time
-                    send_data(config.AIO_RECLINED_TIME, time_convert_min(time_dictionary['total_time_reclined']))
+
+                    time_dictionary['start_time_reclined'] = time.time()
+                    current_time = time_dictionary['start_time_reclined'] - time_dictionary['end_time']
+                    time_dictionary['total_time_reclined'] +=  current_time
+                    send_data(config.AIO_RECLINED_TIME, round(time_dictionary['total_time_reclined'] / 60))
                     pycom.rgbled(0xFFFF00)
 
                 else:
-                    time_dictionary['start_time_reclined'] == 0
-                    if time_dictionary['start_time_upright'] == 0:
-                        time_dictionary['start_time_upright'] = time.time()
-                    current_time = time_dictionary['end_time'] - time_dictionary['start_time_upright']
-                    time_dictionary['total_time_upright'] = current_time
-                    send_data(config.AIO_UPRIGHT_TIME, time_convert_min(time_dictionary['total_time_upright']))
+
+                    time_dictionary['start_time_upright'] = time.time()
+                    current_time = time_dictionary['start_time_upright'] - time_dictionary['end_time']
+                    time_dictionary['total_time_upright'] +=  current_time
+                    send_data(config.AIO_UPRIGHT_TIME, round(time_dictionary['total_time_upright'] / 60))
                     pycom.rgbled(0x00FF00)
+
+                time_dictionary['total_time'] = time_dictionary['total_time_upright'] + time_dictionary['total_time_reclined']
+                send_reminder(time_convert_hour(time_dictionary['total_time']))
+                send_data(config.AIO_TOTAL_SITTING_TIME, (time_convert_hour(time_dictionary['total_time']) + (time_convert_min(time_dictionary['total_time']) / 60)))
 
             else:
                 reset_data()
 
-            time_dictionary['total_time'] = time_dictionary['total_time_upright'] + time_dictionary['total_time_reclined']
-            send_reminder(time_convert_hour(time_dictionary['total_time']))
-            send_data(config.AIO_TOTAL_SITTING_TIME, (time_convert_hour(time_dictionary['total_time']) + (time_convert_min(time_dictionary['total_time']) / 60)))
-
-
+            time_dictionary['end_time'] = time.time()
             time.sleep(send_data_intervalls)
-
 finally:                                 # If an exception is thrown ...
     connectiondata.CLIENT.disconnect()   # ... disconnect the client and clean up.
     connectiondata.CLIENT = None
